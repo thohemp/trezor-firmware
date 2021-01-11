@@ -337,7 +337,7 @@ STATIC mp_obj_t mod_trezorui_Display_text(size_t n_args, const mp_obj_t *args) {
   mp_int_t fgcolor = mp_obj_get_int(args[5]);
   mp_int_t bgcolor = mp_obj_get_int(args[6]);
 
-  char *buf_start = text.buf;
+  const char *buf_start = text.buf;
   int buf_len = text.len;
   if (n_args > 7) {
     mp_int_t off = mp_obj_get_int(args[7]);
@@ -436,7 +436,7 @@ STATIC mp_obj_t mod_trezorui_Display_text_width(size_t n_args,
   mp_get_buffer_raise(args[1], &txt, MP_BUFFER_READ);
   mp_int_t f = mp_obj_get_int(args[2]);
 
-  char *buf_start = txt.buf;
+  const char *buf_start = txt.buf;
   int buf_len = txt.len;
   if (n_args > 3) {
     mp_int_t off = mp_obj_get_int(args[3]);
