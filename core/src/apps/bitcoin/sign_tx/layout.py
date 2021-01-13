@@ -2,11 +2,13 @@ from micropython import const
 from ubinascii import hexlify
 
 from trezor import ui
-from trezor.messages import AmountUnit, ButtonRequestType, OutputScriptType
+from trezor.messages import AmountUnit, ButtonRequestType, MemoType, OutputScriptType
 from trezor.strings import format_amount
+from trezor.ui.confirm import CONFIRMED, INFO, InfoConfirm
 from trezor.ui.text import Text
 from trezor.utils import chunks
 
+from apps.common import button_request, coininfo
 from apps.common.confirm import require_confirm, require_hold_to_confirm
 
 from .. import addresses
@@ -17,6 +19,7 @@ if False:
     from trezor import wire
     from trezor.messages.SignTx import EnumTypeAmountUnit
     from trezor.messages.TxOutput import TxOutput
+    from trezor.messages.TxAckPaymentRequest import TxAckPaymentRequest
 
     from apps.common.coininfo import CoinInfo
 
@@ -69,10 +72,50 @@ async def confirm_output(
         address = output.address
         assert address is not None
         address_short = addresses.address_short(coin, address)
-        text = Text("Confirm sending", ui.ICON_SEND, ui.GREEN)
+        if output.payment_req_index is None:
+            text = Text("Confirm sending", ui.ICON_SEND, ui.GREEN)
+        else:
+            text = Text("Confirm details", ui.ICON_CONFIRM, ui.GREEN)
         text.normal(format_coin_amount(output.amount, coin, amount_unit) + " to")
         text.mono(*split_address(address_short))
     await require_confirm(ctx, text, ButtonRequestType.ConfirmOutput)
+
+
+async def confirm_payment_request(
+    ctx: wire.Context,
+    msg: TxAckPaymentRequest,
+    amount_unit: EnumTypeAmountUnit,
+    coin: CoinInfo,
+) -> bool:
+    text = Text("Confirm sending", ui.ICON_SEND, ui.GREEN)
+    text.normal(format_coin_amount(msg.amount, coin, amount_unit) + " to")
+    text.normal(msg.recipient_name)
+    text.br_half()
+    for memo in msg.memos:
+        if memo.type == MemoType.UTF8_TEXT:
+            text.normal(memo.data.decode())
+        elif memo.type == MemoType.COIN_PURCHASE:
+            assert memo.amount is not None  # checked by sanitizer
+            assert memo.coin_name is not None  # checked by sanitizer
+            memo_coin = coininfo.by_name(memo.coin_name)
+            text.normal(
+                "Buying "
+                + format_coin_amount(memo.amount, memo_coin, amount_unit)
+                + "."
+            )
+
+    await button_request(ctx, code=ButtonRequestType.ConfirmOutput)
+
+    dialog = InfoConfirm(text, info="Details")
+    result = await ctx.wait(dialog)
+
+    if result is INFO:
+        return True  # show details
+
+    if result is CONFIRMED:
+        return False  # don't show details
+
+    raise wire.ActionCancelled
 
 
 async def confirm_replacement(ctx: wire.Context, description: str, txid: bytes) -> None:
