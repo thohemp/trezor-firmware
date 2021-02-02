@@ -1,0 +1,196 @@
+image: registry.gitlab.com/satoshilabs/trezor/trezor-firmware/trezor-firmware-env.nix
+
+# Hardware
+
+hardware core regular device test 1:
+  stage: test
+  only:
+    - schedules  # nightly build
+    - /^legacy\//
+    - /^release\//
+    - /^secfix\//
+    - /^hw\//
+  tags:
+    - tpmb
+  needs:
+    - core fw regular debug build
+  variables:
+    PYTEST_TIMEOUT: "1200"
+  script:
+    - cd ci/hardware_tests
+    - set -a
+    - source hardware.cfg
+    - set +a
+    - nix-shell --run "cd ../.. && poetry install"
+    - ls -l ../..
+    - ls -l ..
+    - nix-shell --run "poetry run python bootstrap.py tt ../../trezor-*.bin"
+    - nix-shell --run "poetry run pytest --random-order-bucket=none -x -m 'not altcoin and not sd_card' -k 'not 15_of_15 and not test_multisig_mismatch_inputs' ../../tests/device_tests/test_[^m]*py"
+  timeout: 4h
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_SHORT_SHA"
+    expire_in: 2 days
+    when: always
+
+hardware core regular device test 2:
+  stage: test
+  only:
+    - schedules  # nightly build
+    - /^legacy\//
+    - /^release\//
+    - /^secfix\//
+    - /^hw\//
+  tags:
+    - tpmb
+  needs:
+    - core fw regular debug build
+  variables:
+    PYTEST_TIMEOUT: "1200"
+  script:
+    - cd ci/hardware_tests
+    - set -a
+    - source hardware.cfg
+    - set +a
+    - nix-shell --run "cd ../.. && poetry install"
+    - ls -l ../..
+    - ls -l ..
+    - nix-shell --run "poetry run python bootstrap.py tt ../../trezor-*.bin"
+    - nix-shell --run "poetry run pytest --random-order-bucket=none -x -m 'not altcoin and not sd_card' -k 'not 15_of_15 and not test_multisig_mismatch_inputs and not test_sign_tx' ../../tests/device_tests/test_m*py"
+  timeout: 4h
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_SHORT_SHA"
+    expire_in: 2 days
+    when: always
+
+hardware core regular device test 3:
+  stage: test
+  only:
+    - schedules  # nightly build
+    - /^legacy\//
+    - /^release\//
+    - /^secfix\//
+    - /^hw\//
+  tags:
+    - tpmb
+  needs:
+    - core fw regular debug build
+  variables:
+    PYTEST_TIMEOUT: "1200"
+  script:
+    - cd ci/hardware_tests
+    - set -a
+    - source hardware.cfg
+    - set +a
+    - nix-shell --run "cd ../.. && poetry install"
+    - ls -l ../..
+    - ls -l ..
+    - nix-shell --run "poetry run python bootstrap.py tt ../../trezor-*.bin"
+    - nix-shell --run "poetry run pytest --random-order-bucket=none -x -m 'altcoin and not sd_card' ../../tests/device_tests/test_msg_[a-r]*.py"
+  timeout: 4h
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_SHORT_SHA"
+    expire_in: 2 days
+    when: always
+
+hardware core regular device test 4:
+  stage: test
+  only:
+    - schedules  # nightly build
+    - /^legacy\//
+    - /^release\//
+    - /^secfix\//
+    - /^hw\//
+  tags:
+    - tpmb
+  needs:
+    - core fw regular debug build
+  variables:
+    PYTEST_TIMEOUT: "1200"
+  script:
+    - cd ci/hardware_tests
+    - set -a
+    - source hardware.cfg
+    - set +a
+    - nix-shell --run "cd ../.. && poetry install"
+    - nix-shell --run "poetry run python bootstrap.py tt ../../trezor-*.bin"
+    - nix-shell --run "poetry run pytest --random-order-bucket=none -x -m 'altcoin and not sd_card' ../../tests/device_tests/test_msg_[s-z]*.py ../../tests/device_tests/test_[^m]*.py ../../tests/device_tests/test_m[^s]*.py"
+  timeout: 4h
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_SHORT_SHA"
+    expire_in: 2 days
+    when: always
+
+hardware core btconly device test:
+  stage: test
+  only:
+    - schedules  # nightly build
+    - /^legacy\//
+    - /^release\//
+    - /^secfix\//
+    - /^hw\//
+  tags:
+    - tpmb
+  needs:
+    - core fw btconly debug build
+  variables:
+    TREZOR_PYTEST_SKIP_ALTCOINS: 1
+    PYTEST_TIMEOUT: "1200"
+  script:
+    - cd ci/hardware_tests
+    - set -a
+    - source hardware.cfg
+    - set +a
+    - nix-shell --run "cd ../.. && poetry install"
+    - nix-shell --run "poetry run python bootstrap.py tt ../../trezor-*.bin"
+    - nix-shell --run "poetry run pytest -x ../../tests/device_tests -m 'not sd_card' -k 'not 15_of_15 and not test_multisig_mismatch_inputs'"
+  timeout: 4h
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_SHORT_SHA"
+    expire_in: 2 days
+    when: always
+
+hardware legacy regular device test:
+  stage: test
+  only:
+    - schedules  # nightly build
+    - /^legacy\//
+    - /^release\//
+    - /^secfix\//
+    - /^hw\//
+  tags:
+    - tpmb
+  needs:
+    - legacy fw regular debug build
+  script:
+    - cd ci/hardware_tests
+    - nix-shell --run "./t1_hw_test.sh"
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - ci/hardware_tests/*.mp4
+    expire_in: 2 days
+    when: always
+
+hardware legacy btconly device test:
+  stage: test
+  variables:
+    TREZOR_PYTEST_SKIP_ALTCOINS: 1
+  only:
+    - schedules  # nightly build
+    - /^legacy\//
+    - /^release\//
+    - /^secfix\//
+    - /^hw\//
+  tags:
+    - tpmb
+  needs:
+    - legacy fw btconly debug build
+  script:
+    - cd ci/hardware_tests
+    - nix-shell --run "./t1_hw_test.sh"
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - ci/hardware_tests/*.mp4
+    expire_in: 2 days
+    when: always
