@@ -308,7 +308,7 @@ def show_pubkey(
         title="Confirm public key",
         data=pubkey,
         br_code=ButtonRequestType.PublicKey,
-        _receive=True,
+        icon=ui.ICON_RECEIVE,
     )
 
 
@@ -426,9 +426,10 @@ async def confirm_hex(
     title: str,
     data: str,
     br_code: EnumTypeButtonRequestType = ButtonRequestType.Other,
-    _receive: bool = False,
+    icon: str = ui.ICON_SEND,  # TODO cleanup @ redesign
+    icon_color: int = ui.GREEN,  # TODO cleanup @ redesign
 ) -> bool:
-    text = Text(title, ui.ICON_RECEIVE if _receive else ui.ICON_SEND, ui.GREEN)
+    text = Text(title, icon, icon_color)
     text.mono(*_hex_lines(data))
     return is_confirmed(await interact(ctx, Confirm(text), br_type, br_code))
 
