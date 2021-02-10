@@ -80,9 +80,10 @@ async def confirm_action(
     elif action is not None:
         text.bold(action)
 
-    text.br()
-    if larger_vspace:
-        text.br_half()
+    if action is not None and description is not None:
+        text.br()
+        if larger_vspace:
+            text.br_half()
 
     if reverse and action is not None:
         text.bold(action)
