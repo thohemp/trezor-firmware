@@ -1,6 +1,6 @@
 import storage.device
 import storage.sd_salt
-from trezor import config, ui, wire
+from trezor import config, wire
 from trezor.crypto import random
 from trezor.messages import SdProtectOperationType
 from trezor.messages.Success import Success
@@ -170,12 +170,10 @@ def require_confirm_sd_protect(ctx: wire.Context, msg: SdProtect) -> Awaitable[N
     elif msg.operation == SdProtectOperationType.DISABLE:
         text = "Do you really want to remove SD card protection from your device?"
     elif msg.operation == SdProtectOperationType.REFRESH:
-        text = "Do you really want to replace the current SD card secret with a newly generated one?"
+        text = "Do you really want to replace the current\nSD card secret with a newly generated one?"
     else:
         raise wire.ProcessError("Unknown operation")
 
     return require(
-        confirm_action(
-            ctx, "set_sd", "SD card protection", description=text, icon=ui.ICON_CONFIG
-        )
+        confirm_action(ctx, "set_sd", "SD card protection", description=text)
     )
